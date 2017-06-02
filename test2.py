@@ -28,14 +28,17 @@ def MakeLabelObject(label_name, mlv='show', llv='labelShow'):
 
 def CheckForLabel(check_label_name, label_list, service):
     label_id = ''
+    label_name = ''
     print('Checking for label: [{0}]'.format(check_label_name))
     for label in label_list['labels']:
         if label['name'] == check_label_name:
             label_id = label['id']
+            label_name = label['name']
             print('Label [{0}] found with id:[{1}]'.format(check_label_name, label_id))
             break
-    if label_id:
-        return label_id
+    if label_id and label_name:
+        print('Label found with id: [{0}]'.format(label_id))
+        return [label_id, label_name]
     else:
         # Create Label Objects if not exist
         print('No label found')
@@ -47,21 +50,26 @@ def CheckForLabel(check_label_name, label_list, service):
         CreateLabel(service, 'me', label_object)
 
 def CheckEmail(service, label_id):
-    email_threads = service.users().threads().list(userId='me', labelIds=label_id).execute()
-    print(email_threads)
-    return(email_threads)
+    email_threads = service.users().threads().list(userId='me', labelIds=label_id).execute().get('threads', [])
+    if not email_threads:
+        print('No email threads found')
+    else:
+        print(email_threads)
+        return(email_threads)
 
-def LabelWatch(service, label_id):
+def LabelWatch(service, label_list_id_name):
     while True:
-        print('Checking [{0}] for new alerts...'.format(label_id))
-        if CheckEmail(service, label_id):
+        print('Checking [{0}] for new alerts...'.format(label_list_id_name[1]))
+        threads_object = CheckEmail(service, label_list_id_name[0])
+        if threads_object:
             print('Found new alert email!')
             break
         time.sleep(15)
-    ProcessAlert()
+    ProcessAlert(service, threads_object)
 
-def ProcessAlert():
+def ProcessAlert(service, threads_object):
     print('Processing alert...')
+    # threads = service.users().threads().list(userId='me').execute().get('threads', [])
 
 SCOPES = 'https://www.googleapis.com/auth/gmail.modify'
 store = file.Storage('storage.json')
@@ -78,6 +86,8 @@ new_alerts_id = CheckForLabel('Malware Alerts New', labels_list, GMAIL)
 pending_alerts_id = CheckForLabel('Malware Alerts Pending', labels_list, GMAIL)
 cleaned_alerts_id = CheckForLabel('Malware Alerts Cleaned', labels_list, GMAIL)
 
+# Label_22
+# print(new_alerts_id)
 LabelWatch(GMAIL, new_alerts_id)
 
 
