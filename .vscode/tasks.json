@@ -1,0 +1,10 @@
+{
+    "version": "0.1.0",
+    "command": "python.exe",
+    // "command": "python3",
+    "pythonPath": "${config.python.pythonPath}",
+    "isShellCommand": false,
+    "showOutput": "always",
+    "args": ["${file}"],
+    "console": "integratedTerminal"
+}
